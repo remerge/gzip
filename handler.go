@@ -1,7 +1,6 @@
 package gzip
 
 import (
-	"compress/gzip"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/klauspost/compress/gzip"
 )
 
 type gzipHandler struct {
