@@ -78,5 +78,7 @@ func (g *gzipHandler) shouldCompress(req *http.Request) bool {
 
 func (g *gzipHandler) isPathExcluded(path string) bool {
 	extension := filepath.Ext(path)
-	return g.ExcludedExtensions.Contains(extension) || g.ExcludedPaths.Contains(path) || g.ExcludedPathesRegexs.Contains(path)
+	return g.ExcludedExtensions.Contains(extension) ||
+		g.ExcludedPaths.Contains(path) ||
+		g.ExcludedPathesRegexs.Contains(path)
 }
