@@ -1,7 +1,6 @@
 package gzip
 
 import (
-	"compress/gzip"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/klauspost/compress/gzip"
 )
 
 type gzipHandler struct {
@@ -78,5 +78,7 @@ func (g *gzipHandler) shouldCompress(req *http.Request) bool {
 
 func (g *gzipHandler) isPathExcluded(path string) bool {
 	extension := filepath.Ext(path)
-	return g.ExcludedExtensions.Contains(extension) || g.ExcludedPaths.Contains(path) || g.ExcludedPathesRegexs.Contains(path)
+	return g.ExcludedExtensions.Contains(extension) ||
+		g.ExcludedPaths.Contains(path) ||
+		g.ExcludedPathesRegexs.Contains(path)
 }

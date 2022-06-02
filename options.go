@@ -1,12 +1,12 @@
 package gzip
 
 import (
-	"compress/gzip"
 	"net/http"
 	"regexp"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/klauspost/compress/gzip"
 )
 
 var (

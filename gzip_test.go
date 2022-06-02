@@ -2,7 +2,6 @@ package gzip
 
 import (
 	"bytes"
-	"compress/gzip"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -15,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/klauspost/compress/gzip"
 	"github.com/stretchr/testify/assert"
 )
 
