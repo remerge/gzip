@@ -52,6 +52,10 @@ func (g *gzipHandler) Handle(c *gin.Context) {
 
 	c.Header("Content-Encoding", "gzip")
 	c.Header("Vary", "Accept-Encoding")
+	originalWriter := c.Writer
+	defer func() {
+		c.Writer = originalWriter
+	}()
 	c.Writer = &gzipWriter{c.Writer, gz}
 	defer func() {
 		gz.Close()
