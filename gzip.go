@@ -18,7 +18,13 @@ func Gzip(level int, options ...Option) gin.HandlerFunc {
 
 type gzipWriter struct {
 	gin.ResponseWriter
-	writer *gzip.Writer
+	writer  *gzip.Writer
+	onFlush func()
+}
+
+func (g *gzipWriter) Flush() {
+	g.ResponseWriter.Flush()
+	g.onFlush()
 }
 
 func (g *gzipWriter) WriteString(s string) (int, error) {

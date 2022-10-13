@@ -46,13 +46,18 @@ func (g *gzipHandler) Handle(c *gin.Context) {
 	}
 
 	gz := g.gzPool.Get().(*gzip.Writer)
-	defer g.gzPool.Put(gz)
-	defer gz.Reset(ioutil.Discard)
 	gz.Reset(c.Writer)
 
 	c.Header("Content-Encoding", "gzip")
 	c.Header("Vary", "Accept-Encoding")
-	c.Writer = &gzipWriter{c.Writer, gz}
+	c.Writer = &gzipWriter{
+		ResponseWriter: c.Writer, writer: gz,
+		onFlush: func() {
+			gz.Reset(ioutil.Discard)
+			g.gzPool.Put(gz)
+		},
+	}
+
 	defer func() {
 		gz.Close()
 		c.Header("Content-Length", fmt.Sprint(c.Writer.Size()))
