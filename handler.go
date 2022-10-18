@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/klauspost/compress/gzip"
@@ -36,6 +37,27 @@ func newGzipHandler(level int, options ...Option) *gzipHandler {
 	return handler
 }
 
+func (g *gzipHandler) scheduleTriggerOnContextDone(done <-chan struct{}, cb func()) {
+	if done == nil {
+		return
+	}
+
+	go func(doneCh <-chan struct{}) {
+		deadline := time.NewTicker(10 * time.Minute)
+		defer deadline.Stop()
+		for {
+			select {
+			case <-doneCh:
+				break
+			case <-deadline.C:
+				break
+			}
+		}
+
+		cb()
+	}(done)
+}
+
 func (g *gzipHandler) Handle(c *gin.Context) {
 	if fn := g.DecompressFn; fn != nil && c.Request.Header.Get("Content-Encoding") == "gzip" {
 		fn(c)
@@ -50,13 +72,12 @@ func (g *gzipHandler) Handle(c *gin.Context) {
 
 	c.Header("Content-Encoding", "gzip")
 	c.Header("Vary", "Accept-Encoding")
-	c.Writer = &gzipWriter{
-		ResponseWriter: c.Writer, writer: gz,
-		onFlush: func() {
-			gz.Reset(ioutil.Discard)
-			g.gzPool.Put(gz)
-		},
-	}
+	c.Writer = &gzipWriter{ResponseWriter: c.Writer, writer: gz}
+
+	g.scheduleTriggerOnContextDone(c.Request.Context().Done(), func() {
+		gz.Reset(ioutil.Discard)
+		g.gzPool.Put(gz)
+	})
 
 	defer func() {
 		gz.Close()
