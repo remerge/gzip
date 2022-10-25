@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/klauspost/compress/gzip"
@@ -14,21 +13,13 @@ import (
 
 type gzipHandler struct {
 	*Options
-	gzPool sync.Pool
+	gzipLevel int
 }
 
 func newGzipHandler(level int, options ...Option) *gzipHandler {
 	handler := &gzipHandler{
-		Options: DefaultOptions,
-		gzPool: sync.Pool{
-			New: func() interface{} {
-				gz, err := gzip.NewWriterLevel(ioutil.Discard, level)
-				if err != nil {
-					panic(err)
-				}
-				return gz
-			},
-		},
+		Options:   DefaultOptions,
+		gzipLevel: level,
 	}
 	for _, setter := range options {
 		setter(handler.Options)
@@ -45,14 +36,13 @@ func (g *gzipHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	gz := g.gzPool.Get().(*gzip.Writer)
-	defer g.gzPool.Put(gz)
-	defer gz.Reset(ioutil.Discard)
+	gz := g.mustNewGzipWriter()
 	gz.Reset(c.Writer)
 
 	c.Header("Content-Encoding", "gzip")
 	c.Header("Vary", "Accept-Encoding")
-	c.Writer = &gzipWriter{c.Writer, gz}
+	c.Writer = &gzipWriter{ResponseWriter: c.Writer, writer: gz}
+
 	defer func() {
 		gz.Close()
 		c.Header("Content-Length", fmt.Sprint(c.Writer.Size()))
@@ -81,4 +71,12 @@ func (g *gzipHandler) isPathExcluded(path string) bool {
 	return g.ExcludedExtensions.Contains(extension) ||
 		g.ExcludedPaths.Contains(path) ||
 		g.ExcludedPathesRegexs.Contains(path)
+}
+
+func (g *gzipHandler) mustNewGzipWriter() *gzip.Writer {
+	gz, err := gzip.NewWriterLevel(ioutil.Discard, g.gzipLevel)
+	if err != nil {
+		panic(err)
+	}
+	return gz
 }
