@@ -25,7 +25,7 @@ const (
 
 type rServer struct{}
 
-func (s *rServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (s *rServer) ServeHTTP(rw http.ResponseWriter, _ *http.Request) {
 	fmt.Fprint(rw, testReverseResponse)
 }
 
