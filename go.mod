@@ -1,8 +1,6 @@
 module github.com/gin-contrib/gzip
 
-go 1.21
-
-toolchain go1.26.10
+go 1.27.3
 
 require (
 	github.com/gin-gonic/gin v1.9.1
